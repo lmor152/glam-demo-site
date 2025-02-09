@@ -3,7 +3,11 @@ from glam.types import NZSA
 
 
 class Wrapper:
-    gc = Geocoder("glamdeps")
+    gc = None
+
+    @classmethod
+    def load_geocoder(cls):
+        cls.gc = Geocoder("glamdeps")
 
     @classmethod
     def parse_address(cls, address):

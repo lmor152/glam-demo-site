@@ -1,3 +1,5 @@
+import time
+
 import streamlit as st
 from wrapper import Wrapper
 
@@ -31,31 +33,47 @@ with st.sidebar:
 
 st.title("GLAM Demo")
 
-st.markdown(
+
+if not st.session_state.get("loaded", False):
+    st.markdown(
+        "The geocoder can take a few seconds to load. Once you're ready to start testing, click the button below."
+    )
+
+    load_button = st.button("Load Geocoder", use_container_width=True)
+    if load_button:
+        Wrapper.load_geocoder()
+        st.session_state.loaded = True
+        st.balloons()
+        time.sleep(2)
+        st.rerun()
+
+
+else:
+    st.markdown(
+        """
+    GLAM is designed to handle messy addresses, this includes building names, levels, abbreviations, and typos. 
+
+    Test it out by entering an address, and seeing how it parses the address components and finds the best match in the LINZ database.
     """
-GLAM is designed to handle messy addresses, this includes building names, levels, abbreviations, and typos. 
+    )
 
-Test it out by entering an address, and seeing how it parses the address components and finds the best match in the LINZ database.
-"""
-)
+    address = st.text_input(
+        "Enter an address to test:", "Level three, KPMG, 18 viaduct harbour ave, 1010"
+    )
 
-address = st.text_input(
-    "Enter an address to test:", "Level three, KPMG, 18 viaduct harbour ave, 1010"
-)
+    c1, c2 = st.columns(2)
 
-c1, c2 = st.columns(2)
+    with c1:
+        st.write("Your address was parsed into:")
+        st.table(Wrapper.parse_address(address))
 
-with c1:
-    st.write("Your address was parsed into:")
-    st.table(Wrapper.parse_address(address))
+    with c2:
+        match, conf = Wrapper.match_address(address)
+        st.write(f"Best match found (confidence = {conf * 100:.2f}%):")
+        st.table(match)
 
-with c2:
-    match, conf = Wrapper.match_address(address)
-    st.write(f"Best match found (confidence = {conf * 100:.2f}%):")
-    st.table(match)
-
-search = st.text_input(
-    "You can ***exact*** search against the LINZ database to find your address here too:",
-    "18 Viaduct Harbour Avenue, Auckland",
-)
-st.dataframe(Wrapper.search_address(search))
+    search = st.text_input(
+        "You can ***exact*** search against the LINZ database to find your address here too:",
+        "18 Viaduct Harbour Avenue, Auckland",
+    )
+    st.dataframe(Wrapper.search_address(search))
