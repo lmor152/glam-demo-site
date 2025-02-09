@@ -10,25 +10,38 @@ class Wrapper:
         cls.gc = Geocoder("glamdeps")
 
     @classmethod
-    def parse_address(cls, address):
-        as_dict = cls.gc.parse_addresses([address])[0].to_dict()
-        return {k: v for k, v in as_dict.items() if v is not None}
+    def parse_address(cls, address: str):
+        if address.strip() == "":
+            return {"empty": "No address provided."}
+
+        try:
+            as_dict = cls.gc.parse_addresses([address])[0].to_dict()
+            return {k: v for k, v in as_dict.items() if v is not None}
+        except:
+            return {"error": "Failed to parse address."}
 
     @classmethod
-    def match_address(cls, address) -> tuple[dict[str, str | None], float]:
-        tidied = cls.gc.parse_addresses([address])[0].format_address(human=True)
+    def match_address(cls, address: str) -> tuple[dict[str, str | None], float]:
+        if address.strip() == "":
+            return {"empty": "No address provided."}, 0
 
-        matched = cls.gc.geocode_addresses([tidied])[0]
+        try:
+            tidied = cls.gc.parse_addresses([address])[0].format_address(human=True)
 
-        conf = matched.confidence
-        linz = matched.matched_address
+            matched = cls.gc.geocode_addresses([tidied])[0]
 
-        if linz is None:
-            return {"error": "No match found."}, 0
-        else:
-            as_dict = linz.to_dict()
+            conf = matched.confidence
+            linz = matched.matched_address
 
-        return {k: v for k, v in as_dict.items() if v is not None}, conf
+            if linz is None:
+                return {"error": "No match found."}, 0
+            else:
+                as_dict = linz.to_dict()
+
+            return {k: v for k, v in as_dict.items() if v is not None}, conf
+
+        except:
+            return {"error": "Failed to match address."}, 0
 
     @classmethod
     def search_address(cls, address):

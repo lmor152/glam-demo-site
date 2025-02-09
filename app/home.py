@@ -42,11 +42,14 @@ if not st.session_state.get("loaded", False):
     load_button = st.button("Load Geocoder", use_container_width=True)
     if load_button:
         Wrapper.load_geocoder()
+
+        # do a call to make sure the geocoder has loaded matcher dependencies
+        _ = Wrapper.gc.geocode_addresses(["70 symonds street grafton"])
+
         st.session_state.loaded = True
         st.balloons()
         time.sleep(2)
         st.rerun()
-
 
 else:
     st.markdown(
