@@ -1,14 +1,5 @@
 import streamlit as st
-
-
-def parse_address(address):
-    split = address.split(" ")
-    return {
-        "street": split[0].strip(),
-        "city": split[1].strip(),
-        "postcode": split[2].strip(),
-    }
-
+from wrapper import Wrapper
 
 st.set_page_config(
     page_title="GLAM Demo",
@@ -17,11 +8,11 @@ st.set_page_config(
 )
 
 intro = """
-I created GLAM (Geocoding Via LINZ Address Matching) to help with geocoding New Zealand addresses.
+I created GLAM (Geocoding via LINZ Address Matching) to help with geocoding New Zealand addresses.
 
-GLAM is a tool for free offline geocoding. It works by matching addresses to Land Information New Zealand data, so it only works with residential addresses. 
+GLAM is a tool for ***free, offline*** geocoding. It works by matching addresses to Land Information New Zealand data, so it only works with residential addresses. 
 
-GLAM supports a few different algorithms for performing the matching, you can test them out below!
+GLAM includes multiple methods for parsing and matching messy unstructured addresses. Find out more here: https://github.com/lmor152/glam 
 """
 
 with st.sidebar:
@@ -32,42 +23,39 @@ with st.sidebar:
     st.write(intro)
 
     st.markdown("**GLAM Settings**")
-    matcher = st.segmented_control(
-        "Matching Algorithm:", ["Fuzzy", "Vector", "Hybrid", "TF-IDF"]
+    st.write(
+        "At this time, this demo site only supports the RNN-based parser, and the TF-IDF matcher."
     )
-
-    if matcher in ("Vector", "Hybrid", "Fuzzy"):
-        parser = st.segmented_control("Parsing Algorithm:", ["libpostal", "RNN"])
-    else:
-        st.caption("Parser not required for selected matching algorithm.")
-        parser = None
 
     st.divider()
 
-    _, mid, _ = st.columns([1, 2, 1])
-    with mid:
-        load_button = st.button("Load Geocoder")
-        if load_button:
-            st.balloons()
-
 st.title("GLAM Demo")
 
+st.markdown(
+    """
+GLAM is designed to handle messy addresses, this includes building names, levels, abbreviations, and typos. 
+
+Test it out by entering an address, and seeing how it parses the address components and finds the best match in the LINZ database.
+"""
+)
+
 address = st.text_input(
-    "Enter an address to geocode:", "18 Viaduct Harbour Avenue, Auckland, 1010"
+    "Enter an address to test:", "Level three, KPMG, 18 viaduct harbour ave, 1010"
 )
 
 c1, c2 = st.columns(2)
 
 with c1:
     st.write("Your address was parsed into:")
-    st.table(parse_address(address))
+    st.table(Wrapper.parse_address(address))
 
 with c2:
-    st.write("Best match found:")
-    st.table(parse_address(address))
+    match, conf = Wrapper.match_address(address)
+    st.write(f"Best match found (confidence = {conf * 100:.2f}%):")
+    st.table(match)
 
-st.text_input(
-    "You can exact search against the LINZ database to find your address here too:",
-    "18 Viaduct Harbour Avenue, Auckland, 1010",
+search = st.text_input(
+    "You can ***exact*** search against the LINZ database to find your address here too:",
+    "18 Viaduct Harbour Avenue, Auckland",
 )
-st.dataframe()
+st.dataframe(Wrapper.search_address(search))
